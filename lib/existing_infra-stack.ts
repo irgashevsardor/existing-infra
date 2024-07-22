@@ -10,13 +10,6 @@ export class ExistingInfraStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    // const role = new iam.Role(this, 'Role', {
-    //   assumedBy: new iam.ArnPrincipal('arn:aws:iam::408500910341:user/test'),
-    //   roleName: "MyAssumableRole"
-    // })
-
-    // inputQueue.grantSendMessages(role)
-
     const vpc = new ec2.Vpc(this, 'Vpc', { maxAzs: 1 });
 
     const cluster = new ecs.Cluster(this, 'EcsCluster', { vpc });
@@ -25,15 +18,9 @@ export class ExistingInfraStack extends cdk.Stack {
       visibilityTimeout: cdk.Duration.seconds(300)
     });
 
-    const nfsIngressAllowSecurityGroup = new ec2.SecurityGroup(this, 'EfsSecurityGroup', { vpc })
-    nfsIngressAllowSecurityGroup.addIngressRule(
-      nfsIngressAllowSecurityGroup,
-      ec2.Port.tcp(2049)
-    )
 
     const fileSystem = new efs.FileSystem(this, 'NlpV2EfsFileSystem', {
       vpc: vpc,
-      securityGroup: nfsIngressAllowSecurityGroup
     });
 
     fileSystem.addToResourcePolicy(new iam.PolicyStatement({
