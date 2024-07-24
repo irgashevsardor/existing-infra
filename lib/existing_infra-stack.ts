@@ -18,37 +18,55 @@ export class ExistingInfraStack extends cdk.Stack {
       visibilityTimeout: cdk.Duration.seconds(300)
     });
 
-
+    const fileSystemPolicy = new iam.PolicyDocument({
+      statements: [new iam.PolicyStatement({
+        actions: [
+          "elasticfilesystem:ClientMount",
+          "elasticfilesystem:ClientRootAccess",
+          "elasticfilesystem:ClientWrite"
+        ],
+        principals: [new iam.AnyPrincipal()],
+        conditions: {
+          Bool: {
+            'elasticfilesystem:AccessedViaMountTarget': 'true',
+          }
+        }
+      })]
+    })
     const fileSystem = new efs.FileSystem(this, 'NlpV2EfsFileSystem', {
       vpc: vpc,
+      fileSystemPolicy: fileSystemPolicy,
+      removalPolicy: cdk.RemovalPolicy.DESTROY
     });
 
-    fileSystem.addToResourcePolicy(new iam.PolicyStatement({
-      actions: ["elasticfilesystem:ClientMount"],
-      effect: iam.Effect.ALLOW,
-      resources: ["*"],
-      principals: [new iam.ArnPrincipal("arn:aws:iam::408500910341:user/nlp_user2")]
-    }
-    ))
+    const fileSystemSecurityGroupId = fileSystem.connections.securityGroups[0]
 
-    new cdk.CfnOutput(this, 'SQS Name', {
+    new cdk.CfnOutput(this, 'queueName', {
       value: inputQueue.queueName,
     })
 
-    new cdk.CfnOutput(this, 'SQS ARN', {
+    new cdk.CfnOutput(this, 'queueArn', {
       value: inputQueue.queueArn
     })
 
-    new cdk.CfnOutput(this, 'FileSystemId', {
+    new cdk.CfnOutput(this, 'fileSystemId', {
       value: fileSystem.fileSystemId
     })
 
-    new cdk.CfnOutput(this, 'Cluster Name', {
+    new cdk.CfnOutput(this, 'clusterName', {
       value: cluster.clusterName
+    })
+
+    new cdk.CfnOutput(this, 'clusterArn', {
+      value: cluster.clusterArn
     })
 
     new cdk.CfnOutput(this, 'VPC Id', {
       value: vpc.vpcId
+    })
+
+    new cdk.CfnOutput(this, 'Security Group', {
+      value: fileSystemSecurityGroupId.securityGroupId
     })
   }
 }
